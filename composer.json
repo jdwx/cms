@@ -1,0 +1,23 @@
+{
+	"name": "jdwx/cms",
+	"type": "library",
+	"description": "Because creating your own CMS is a logical and sensible course of action.",
+	"keywords": [ "cms" ],
+	"homepage": "https://github.com/jdwx/cms",
+	"license": "MIT",
+	"authors": [{
+		"name": "Jeff Wheelhouse",
+		"email": "phplibs@wheelhouse.org",
+		"homepage": "https://github.com/jdwx",
+		"role": "Developer"
+	}],
+	"autoload": {
+		"psr-4": {
+			"JDWX\\CMS\\": "src/"
+		}
+	},
+	"require": {
+		"jdwx/html5": "master"
+	}
+}
+
