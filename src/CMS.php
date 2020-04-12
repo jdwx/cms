@@ -67,6 +67,8 @@ abstract class CMS {
 
 
 	public function link( string $i_stLink ) : string {
+		if ( '/' == $i_stLink )
+			return $this->stPrefix;
 		if ( '/' == substr( $i_stLink, 0, 1 ) ) {
 			$i_stLink = $this->stPrefix . $i_stLink;
 		}
