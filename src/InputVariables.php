@@ -57,7 +57,7 @@ class InputVariables implements \ArrayAccess {
 
 	public function offsetGet( $i_stName ) : string {
 		assert( is_string( $i_stName ) );
-		$x = $this->_get( $i_stName, $i_stDefaultValue );
+		$x = $this->_get( $i_stName );
 		if ( is_string( $x ) )
 			return $x;
 		throw new \Exception( "The value for {$i_stName} is not a string." );
