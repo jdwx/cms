@@ -27,10 +27,10 @@ abstract class Page {
 	}
 
 
-	abstract function body() : void;
+	abstract protected function body() : void;
 
 
-	abstract function head() : void;
+	abstract protected function head() : void;
 
 
 	public function link( string $i_stLink ) : string {
