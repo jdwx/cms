@@ -7,23 +7,24 @@ declare( strict_types = 1 );
 namespace JDWX\CMS;
 
 
+use JDWX\HTML5\Document;
+
+
 abstract class Page {
 
 
-	/** @var CMS */
-	protected $cms;
+	protected CMS $cms;
 
-	/** @var \JDWX\HTML5\Document */
-	protected $doc;
+	protected Document $doc;
 
 
 	public function __construct() {
-		$this->doc = new \JDWX\HTML5\Document(); 
+		$this->doc = new Document();
 	}
 
 
 	public function __toString() : string {
-		return strval( $this->doc );
+		return ( string ) $this->doc;
 	}
 
 
