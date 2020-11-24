@@ -1,7 +1,4 @@
-<?php
-
-
-declare( strict_types =  1 );
+<?php declare( strict_types = 1 );
 
 
 namespace JDWX\CMS;
@@ -9,93 +6,57 @@ namespace JDWX\CMS;
 
 use ArrayAccess;
 use InvalidArgumentException;
-use UnexpectedValueException;
-
-class InputVariables implements ArrayAccess {
 
 
-	private array $r = [];
+/**
+ * Class InputVariables
+ *
+ * @package JDWX\CMS
+ *
+ *          This is designed to provide array-style access to input variables for convenience.
+ *          However, it intentionally supports only strings.  If you have a situation that
+ *          requires array values, use the getArray()/setArray() methods from the base class
+ *          to access them with type-safety.
+ */
 
 
-	public function __construct( array $i_r ) {
-		foreach ( $i_r as $stKey => $stValue ) {
-		    if ( 'XDEBUG_SESSION' === $stKey ) {
-                continue;
-            }
-            if ( 1 !== preg_match('/^[a-z0-9_]+$/', $stKey ) ) {
-                throw new UnexpectedValueException(
-                    "Input variable has invalid characters: {$stKey}"
-                );
-            }
-            $this->r[ $stKey ] = $stValue;
-         }
-	}
+class InputVariables extends BaseVariables implements ArrayAccess {
 
 
-    /**
-     * @param string $i_stName
-     * @param string|array|null $i_xDefaultValue
-     * @return string|array
-     * @throws UnexpectedValueException
-     */
-	private function get( string $i_stName,
-						   $i_xDefaultValue = null ) {
-
-		if ( array_key_exists( $i_stName, $this->r ) ) {
-            return $this->r[$i_stName];
+    public function offsetExists( $i_stName ) : bool {
+        if ( ! is_string( $i_stName ) ) {
+            throw new InvalidArgumentException( "The key {$i_stName} is not a string." );
         }
+        return $this->exists( $i_stName );
+    }
 
-		if ( ! is_null( $i_xDefaultValue ) ) {
-            return $i_xDefaultValue;
+
+    public function offsetGet( $i_stName ) : string {
+        if ( ! is_string( $i_stName ) ) {
+            throw new InvalidArgumentException( "The key {$i_stName} is not a string." );
         }
-
-		throw new UnexpectedValueException( "No value for {$i_stName}" );
-
-	}
+        return $this->getString( $i_stName );
+    }
 
 
-	public function getArray( string $i_stName,
-							  ?array $i_rDefaultValue = null ) : array {
-		$x = $this->get( $i_stName, $i_rDefaultValue );
-		if ( is_array( $x ) ) {
-            return $x;
+    public function offsetSet( $i_stName, $i_stValue ) : void {
+        if ( ! is_string( $i_stName ) ) {
+            throw new InvalidArgumentException( "The key {$i_stName} is not a string." );
         }
-		throw new InvalidArgumentException( "The value for {$i_stName} is not an array." );
-	}
-
-
-	public function offsetExists( $i_stName ) : bool {
-		assert( is_string( $i_stName ) );
-		return array_key_exists( $i_stName, $this->r );
-	}
-
-
-	public function offsetGet( $i_stName ) : string {
-		assert( is_string( $i_stName ) );
-		$x = $this->get( $i_stName );
-		if ( is_string( $x ) ) {
-            return $x;
+        if ( is_string( $i_stValue ) ) {
+            $this->setString( $i_stName, $i_stValue );
+            return;
         }
-		throw new InvalidArgumentException( "The value for {$i_stName} is not a string." );
-	}
+        throw new InvalidArgumentException( "The new value of {$i_stName} must be a string." );
+    }
 
 
-	public function offsetSet( $i_stName, $i_xValue ) : void {
-		assert( is_string( $i_stName ) );
-		if ( is_string( $i_xValue ) || is_array( $i_xValue ) ) {
-			$this->r[ $i_stName ] = $i_xValue;
-			return;
-		}
-		throw new InvalidArgumentException(
-			"The new value of {$i_stName} must be a string or array."
-		);
-	}
-
-
-	public function offsetUnset( $i_stName ) : void {
-		assert( is_string( $i_stName ) );
-		unset( $this->r[ $i_stName ] );
-	}
+    public function offsetUnset( $i_stName ) : void {
+        if ( ! is_string( $i_stName ) ) {
+            throw new InvalidArgumentException( "The key {$i_stName} is not a string." );
+        }
+        $this->unset( $i_stName );
+    }
 
 
 }

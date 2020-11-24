@@ -10,7 +10,7 @@ namespace JDWX\CMS;
 use JDWX\HTML5\Document;
 
 
-abstract class Page {
+abstract class Page implements IPage {
 
 
 	protected CMS $cms;

@@ -1,12 +1,10 @@
-<?php
-
-
-declare( strict_types = 1 );
+<?php declare( strict_types = 1 );
 
 
 namespace JDWX\CMS;
 
 
+use DomainException;
 use UnexpectedValueException;
 
 
@@ -23,6 +21,8 @@ abstract class CMS {
 
     public InputVariables $POST;
 
+    public array $rFiles;
+
     private array $rRouteMap = [];
 
     private string $stPrefix;
@@ -34,16 +34,28 @@ abstract class CMS {
                                  ?array $i_rPost = null,
                                  ?array $i_rCookie = null,
                                  ?array $i_rFiles = null,
-                                 ?string $i_stPrefix = null ) {
+                                 ?string $i_nstPrefix = null ) {
+
         $this->COOKIE = new InputVariables( $i_rCookie ?? $_COOKIE );
         $this->GET = new InputVariables( $i_rGet ?? $_GET );
         $this->POST = new InputVariables( $i_rPost ?? $_POST );
-        $this->stPrefix = dirname( $i_stPrefix ?? $_SERVER[ 'PHP_SELF' ] );
-        $this->uPrefix = strlen( $this->stPrefix );
+        $this->rFiles = $i_rFiles ?? $_FILES;
 
-        ##  These just sanity-check during development to make sure the prefix always starts and ends with /
-        assert( substr( $this->stPrefix, 0 ) === '/' );
-        assert( substr( $this->stPrefix, -1 ) === '/' );
+        $stPrefix = $i_nstPrefix ?? $_SERVER[ 'PHP_SELF' ];
+        if ( "" === $stPrefix ) {
+            $stPrefix = "/";
+        }
+
+        if ( "/" !== $stPrefix ) {
+            if ( 0 !== strpos( $stPrefix, '/' ) ) {
+                throw new DomainException( "Prefix {$stPrefix} must begin with /" );
+            }
+            $i = strrpos( $stPrefix, "/" );
+            assert( is_int( $i ) ); ##  We ensured this cannot fail above.
+            $stPrefix = substr( $stPrefix, 0, $i + 1 );
+        }
+        $this->stPrefix = $stPrefix;
+        $this->uPrefix = strlen( $this->stPrefix );
 
     }
 
@@ -70,6 +82,19 @@ abstract class CMS {
     }
 
 
+    protected function getPage( string $i_stPage ) : IPage {
+        $obj = require( $i_stPage );
+        $obj->setCMS( $this );
+        $obj->run();
+        return $obj;
+    }
+
+
+    public function getPrefix() : string {
+        return $this->stPrefix;
+    }
+
+
     public function link( string $i_stLink ) : string {
         if ( '/' === $i_stLink ) {
             return $this->stPrefix;
@@ -78,13 +103,32 @@ abstract class CMS {
             return $i_stLink;
         }
         if ( '/' === $i_stLink[ 0 ] ) {
-            $i_stLink = $this->stPrefix . $i_stLink;
+            $i_stLink = $this->stPrefix . substr( $i_stLink, 1 );
         }
         return $i_stLink;
     }
 
 
-    public function route( string $i_stURI ) : void {
+    public function mapRouteArray( array $i_rURI ) : ?string {
+
+        // echo "<p>map = '", print_r( $this->rRouteMap, true ), "'</p>";
+        $where = $this->rRouteMap;
+        foreach ( $i_rURI as $st ) {
+            if ( ! array_key_exists( $st, $where ) ) {
+                $this->error404();
+                return null;
+            }
+            $where = $where[ $st ];
+        }
+
+        // echo "<p>page = ", $where, "</p>";
+
+        return $where;
+
+    }
+
+
+    protected function parseRoute( string $i_stURI ) : array {
 
         ##  Sanity-check the URI
         if ( 1 !== preg_match( '/^[a-z0-9\/_]+$/', $i_stURI ) ) {
@@ -101,26 +145,31 @@ abstract class CMS {
 
         $rURI = explode( '/', $i_stURI );
         $rURI[] = "{END}";
+
         // echo "<p>uri string = '", $i_stURI, "'</p>";
         // echo "<p>uri array = '", print_r( $rURI, true ), "'</p>";
-        // echo "<p>map = '", print_r( $this->rRouteMap, true ), "'</p>";
-        $where = $this->rRouteMap;
-        foreach ( $rURI as $st ) {
-            if ( ! array_key_exists( $st, $where ) ) {
-                $this->error404();
-                return;
-            }
-            $where = $where[ $st ];
-        }
-        $obj = require( $where );
-        $obj->setCMS( $this );
-        $obj->run();
-        echo $obj;
-        // echo "<p>page = ", $where, "</p>";
+
+        return $rURI;
+
     }
 
 
-    abstract protected function setup() : void;
+    public function route( string $i_stURI ) : void {
+
+        $rURI = $this->parseRoute( $i_stURI );
+
+        $where = $this->mapRouteArray( $rURI );
+        if ( ! is_string( $where ) ) {
+            return;
+        }
+
+        $obj = $this->getPage( $where );
+        echo $obj;
+
+    }
+
+
+    abstract public function setup() : void;
 
 
 }
