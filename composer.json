@@ -17,12 +17,12 @@
 		}
 	},
 	"require": {
-		"jdwx/html5": "master"
+		"jdwx/html5": "master",
+        "twig/twig": "^3.0"
 	},
     "require-dev": {
         "phpunit/phpunit": "^9",
-        "phpunit/php-code-coverage": "^9.2",
-        "twig/twig": "^3.0"
+        "phpunit/php-code-coverage": "^9.2"
     }
 }
 
